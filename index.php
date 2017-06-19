@@ -82,9 +82,29 @@ function processOwnerIdOrDomain($id)
 function getAuthorById($profiles, $id)
 {
     $author = array_filter($profiles, function ($profile) use ($id) {
-        return ($profile->id == $id) || ('-' . $profile->id == $id);
+        return ($profile->id == $id) || ('-' . $profile->id == $id) || ($profile->screen_name == $id);
     });
-    return array_shift($author);
+
+    $author = array_shift($author);
+
+    if (isset($author->first_name) && isset($author->last_name)) {
+        return [
+            'name' => implode(' ', [$author->last_name, $author->first_name]),
+            'screen_name' => $author->screen_name,
+        ];
+    }
+
+    if (isset($author->name)) {
+        return [
+            'name' => $author->name,
+            'screen_name' => $author->screen_name,
+        ];
+    }
+
+    return [
+        'name' => 'nobody',
+        'screen_name' => 'none',
+    ];
 }
 
 function getDescriptionFromPost($post)
@@ -121,7 +141,10 @@ function getDescriptionFromPost($post)
                     $link = $attachment[$attachment['type']];
                     $description[] = "<a href=\"{$link->url}\">{$link->title}</a>";
                     break;
-                case 2:
+                case 'album':
+                    $album = $attachment[$attachment['type']];
+                    $description[] = $album->title;
+                    $description[] = "<a href=\"https://vk.com/album{$album->owner_id}_{$album->id}\"><img src=\"{$album->thumb->photo_130}\"></a>";
                     break;
                 default:
                     break;
@@ -150,28 +173,31 @@ $res = $client->get('https://api.vk.com/method/wall.get', [
 ]);
 
 $response = json_decode($res->getBody());
+$profiles = array_merge($response->response->profiles, $response->response->groups);
 
 $feed = new RSS2();
-$feed->setTitle("Vk RSS feed for $feedId");
+$feed->setTitle(getAuthorById($profiles, $feedId)['name']);
 $feed->setLink("http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]");
 $feed->setDate(time());
 
 foreach ($response->response->items as $item) {
-    $author = getAuthorById(array_merge($response->response->profiles, $response->response->groups), $item->from_id);
+    $author = getAuthorById($profiles, $item->from_id);
     $text = [
         getDescriptionFromPost($item),
     ];
 
-    if (!empty($item->copy_history[0])) {
-        $text[] = '<b>Репост:</b>';
-        $text[] = getDescriptionFromPost($item->copy_history[0]);
+    if (!empty($item->copy_history)) {
+        foreach ($item->copy_history as $repost) {
+            $text[] = '<b>Репост ' . getAuthorById($profiles, $repost->from_id)['name'] . ':</b>';
+            $text[] = getDescriptionFromPost($repost);
+        }
     }
 
     $newItem = $feed->createNewItem();
     $newItem->addElementArray([
-        'title' => $author ? $author->screen_name : 'nobody',
+        'title' => $author['name'],
         'pubDate' => date('D, d M Y H:i:s T', $item->date),
-        'author' => $author ? $author->screen_name : 'nobody',
+        'author' => $author['screen_name'],
         'link' => "https://vk.com/wall{$item->owner_id}_{$item->id}",
         'description' => implode('<br />', array_filter($text)),
     ]);
