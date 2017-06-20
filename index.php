@@ -155,7 +155,7 @@ function getDescriptionFromPost($post)
     return implode('<br />', $description);
 }
 
-$feedId = isset($_GET['id']) ? $_GET['id'] : null;
+$feedId = isset($_GET['id']) ? processOwnerIdOrDomain($_GET['id']) : null;
 
 if (empty($feedId)) {
     throw new Exception("Empty params", 400);
@@ -169,14 +169,14 @@ $res = $client->get('https://api.vk.com/method/wall.get', [
         'extended' => 1,
         'access_token' => getenv('VK_ACCESS_TOKEN'),
         'v' => '5.65',
-    ], processOwnerIdOrDomain($feedId)),
+    ], $feedId),
 ]);
 
 $response = json_decode($res->getBody());
 $profiles = array_merge($response->response->profiles, $response->response->groups);
 
 $feed = new RSS2();
-$feed->setTitle(getAuthorById($profiles, $feedId)['name']);
+$feed->setTitle(getAuthorById($profiles, array_pop($feedId))['name']);
 $feed->setLink("http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]");
 $feed->setDate(time());
 
