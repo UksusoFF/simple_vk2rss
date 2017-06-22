@@ -146,7 +146,12 @@ function getDescriptionFromPost($post)
                     $description[] = $album->title;
                     $description[] = "<a href=\"https://vk.com/album{$album->owner_id}_{$album->id}\"><img src=\"{$album->thumb->photo_130}\"></a>";
                     break;
+                case 'page':
+                    $page = $attachment[$attachment['type']];
+                    $description[] = "<a href=\"{$page->view_url}\">{$page->title}</a>";
+                    break;
                 default:
+                    $description[] = "Не известный тип вложения {$attachment['type']}.";
                     break;
             }
         }
