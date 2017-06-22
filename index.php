@@ -151,7 +151,7 @@ function getDescriptionFromPost($post)
                     $description[] = "<a href=\"{$page->view_url}\">{$page->title}</a>";
                     break;
                 default:
-                    $description[] = "Не известный тип вложения {$attachment['type']}.";
+                    $description[] = "Неизвестный тип вложения {$attachment['type']}.";
                     break;
             }
         }
