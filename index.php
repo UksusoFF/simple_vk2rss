@@ -8,7 +8,7 @@ use GuzzleHttp\Client;
 $dotenv = new Dotenv\Dotenv(__DIR__);
 $dotenv->load();
 
-function remove_emoji($text)
+function removeEmoji($text)
 {
     // Match Emoticons
     $regexEmoticons = '/[\x{1F600}-\x{1F64F}]/u';
@@ -112,7 +112,7 @@ function getDescriptionFromPost($post)
     $description = [];
 
     if (!empty($post->text)) {
-        $description[] = remove_emoji(nl2br($post->text)) . '<br />';
+        $description[] = removeEmoji(nl2br($post->text)) . '<br />';
     }
 
     if (isset($post->attachments)) {
@@ -155,8 +155,15 @@ function getDescriptionFromPost($post)
                     $page = $attachment[$attachment['type']];
                     $description[] = "<a href=\"{$page->view_url}\">{$page->title}</a>";
                     break;
+                case 'poll':
+                    $poll = $attachment[$attachment['type']];
+                    $description[] = $poll->question;
+                    foreach ($poll->view_url->answers as $answer) {
+                        $description[] = $answer->text;
+                    }
+                    break;
                 default:
-                    $description[] = "Неизвестный тип вложения {$attachment['type']}.";
+                    $description[] = "Неподдерживаемый тип вложения {$attachment['type']}.";
                     break;
             }
         }
