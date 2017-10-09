@@ -158,7 +158,7 @@ function getDescriptionFromPost($post)
                 case 'poll':
                     $poll = $attachment[$attachment['type']];
                     $description[] = $poll->question;
-                    foreach ($poll->view_url->answers as $answer) {
+                    foreach ($poll->answers as $answer) {
                         $description[] = $answer->text;
                     }
                     break;
