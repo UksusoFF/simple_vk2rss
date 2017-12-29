@@ -82,19 +82,21 @@ function processOwnerIdOrDomain($id)
 function getAuthorById($profiles, $id)
 {
     $author = array_filter($profiles, function ($profile) use ($id) {
-        return ($profile->id == $id) || ('-' . $profile->id == $id) || ($profile->screen_name == $id);
+        return ($profile->id == $id) ||
+            ('-' . $profile->id == $id) ||
+            (isset($profile->screen_name) && $profile->screen_name == $id);
     });
 
     $author = array_shift($author);
 
-    if (isset($author->first_name) && isset($author->last_name)) {
+    if (isset($author->first_name) && isset($author->last_name) && isset($author->screen_name)) {
         return [
             'name' => implode(' ', [$author->last_name, $author->first_name]),
             'screen_name' => $author->screen_name,
         ];
     }
 
-    if (isset($author->name)) {
+    if (isset($author->name) && isset($author->screen_name)) {
         return [
             'name' => $author->name,
             'screen_name' => $author->screen_name,
