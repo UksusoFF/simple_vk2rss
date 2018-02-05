@@ -192,6 +192,11 @@ $res = $client->get('https://api.vk.com/method/wall.get', [
 ]);
 
 $response = json_decode($res->getBody());
+
+if (empty($response->response)) {
+    http_response_code(500);
+}
+
 $profiles = array_merge($response->response->profiles, $response->response->groups);
 
 $feed = new RSS2();
