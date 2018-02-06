@@ -183,6 +183,7 @@ if (empty($feedId)) {
 $client = new Client();
 
 $res = $client->get('https://api.vk.com/method/wall.get', [
+    'delay' => 500,
     'query' => array_merge([
         'count' => 20,
         'extended' => 1,
