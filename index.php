@@ -2,8 +2,13 @@
 
 require 'vendor/autoload.php';
 
+use Doctrine\Common\Cache\FilesystemCache;
 use FeedWriter\RSS2;
 use GuzzleHttp\Client;
+use GuzzleHttp\HandlerStack;
+use Kevinrob\GuzzleCache\CacheMiddleware;
+use Kevinrob\GuzzleCache\Storage\DoctrineCacheStorage;
+use Kevinrob\GuzzleCache\Strategy\GreedyCacheStrategy;
 
 $dotenv = new Dotenv\Dotenv(__DIR__);
 $dotenv->load();
@@ -180,7 +185,19 @@ if (empty($feedId)) {
     throw new Exception("Empty params", 400);
 }
 
-$client = new Client();
+$stack = HandlerStack::create();
+
+$stack->push(new CacheMiddleware(
+    new GreedyCacheStrategy(
+        new DoctrineCacheStorage(
+            new FilesystemCache('cache/')
+        ), 60 * 60 //Seconds
+    )
+), 'cache');
+
+$client = new Client([
+    'handler' => $stack,
+]);
 
 $res = $client->get('https://api.vk.com/method/wall.get', [
     'delay' => 500,

@@ -2,6 +2,8 @@
     "require": {
         "guzzlehttp/guzzle": "^6.2",
         "mibe/feedwriter": "^1.1",
-        "vlucas/phpdotenv": "^2.4"
+        "vlucas/phpdotenv": "^2.4",
+        "kevinrob/guzzle-cache-middleware": "^3.2",
+        "doctrine/cache": "^1.7"
     }
 }
