@@ -211,39 +211,55 @@ $res = $client->get('https://api.vk.com/method/wall.get', [
 
 $response = json_decode($res->getBody());
 
-if (empty($response->response)) {
-    http_response_code(500);
-}
-
-$profiles = array_merge($response->response->profiles, $response->response->groups);
-
 $feed = new RSS2();
-$feed->setTitle(getAuthorById($profiles, array_pop($feedId))['name']);
 $feed->setLink("http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]");
-$feed->setDate(time());
 
-foreach ($response->response->items as $item) {
-    $author = getAuthorById($profiles, $item->from_id);
-    $text = [
-        getDescriptionFromPost($item),
-    ];
-
-    if (!empty($item->copy_history)) {
-        foreach ($item->copy_history as $repost) {
-            $text[] = '<b>Репост ' . getAuthorById($profiles, $repost->from_id)['name'] . ':</b>';
-            $text[] = getDescriptionFromPost($repost);
-        }
+if (empty($response->response)) {
+    switch ($response->error->error_code) {
+        case 15: //Show error once. //15 - Wall is disabled.
+            $date = date('D, d M Y H:i:s T', strtotime('2018-01-01'));
+            break;
+        default: //Show error on each request.
+            $date = date('D, d M Y H:i:s T');
     }
-
-    $newItem = $feed->createNewItem();
-    $newItem->addElementArray([
-        'title' => $author['name'],
-        'pubDate' => date('D, d M Y H:i:s T', $item->date),
-        'author' => $author['screen_name'],
-        'link' => "https://vk.com/wall{$item->owner_id}_{$item->id}",
-        'description' => implode('<br />', array_filter($text)),
+    $errorItem = $feed->createNewItem();
+    $errorItem->addElementArray([
+        'title' => 'Error Reporter',
+        'pubDate' => $date,
+        'author' => 'Error',
+        'link' => "https://vk.com/{$_GET['id']}",
+        'description' => $response->error->error_msg,
     ]);
-    $feed->addItem($newItem);
+    $feed->addItem($errorItem);
+} else {
+    $profiles = array_merge($response->response->profiles, $response->response->groups);
+
+    $feed->setTitle(getAuthorById($profiles, array_pop($feedId))['name']);
+    $feed->setDate(time());
+
+    foreach ($response->response->items as $item) {
+        $author = getAuthorById($profiles, $item->from_id);
+        $text = [
+            getDescriptionFromPost($item),
+        ];
+
+        if (!empty($item->copy_history)) {
+            foreach ($item->copy_history as $repost) {
+                $text[] = '<b>Репост ' . getAuthorById($profiles, $repost->from_id)['name'] . ':</b>';
+                $text[] = getDescriptionFromPost($repost);
+            }
+        }
+
+        $newItem = $feed->createNewItem();
+        $newItem->addElementArray([
+            'title' => $author['name'],
+            'pubDate' => date('D, d M Y H:i:s T', $item->date),
+            'author' => $author['screen_name'],
+            'link' => "https://vk.com/wall{$item->owner_id}_{$item->id}",
+            'description' => implode('<br />', array_filter($text)),
+        ]);
+        $feed->addItem($newItem);
+    }
 }
 
 $feed->generateFeed();
