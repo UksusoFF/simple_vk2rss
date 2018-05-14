@@ -208,12 +208,14 @@ $client = new Client([
     'handler' => $stack,
 ]);
 
+$tokens = explode(',', getenv('VK_ACCESS_TOKEN'));
+
 $res = $client->get('https://api.vk.com/method/wall.get', [
     'delay' => 1000,
     'query' => array_merge([
         'count' => 20,
         'extended' => 1,
-        'access_token' => getenv('VK_ACCESS_TOKEN'),
+        'access_token' => $tokens[array_rand($tokens)],
         'v' => '5.71',
     ], $feedId),
 ]);
