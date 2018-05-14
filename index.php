@@ -13,6 +13,14 @@ use Kevinrob\GuzzleCache\Strategy\GreedyCacheStrategy;
 $dotenv = new Dotenv\Dotenv(__DIR__);
 $dotenv->load();
 
+$clientIp = isset($_SERVER['HTTP_CLIENT_IP']) ? $_SERVER['HTTP_CLIENT_IP'] : isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR'];;
+
+if (!in_array($clientIp, explode(',', getenv('ALLOWED_IP')))) {
+    file_put_contents("logs/$clientIp.log", $_SERVER["REQUEST_URI"] . PHP_EOL, FILE_APPEND);
+    header('HTTP/1.1 403 Access Denied');
+    exit();
+}
+
 function removeEmoji($text)
 {
     // Match Emoticons
@@ -182,7 +190,8 @@ function getDescriptionFromPost($post)
 $feedId = isset($_GET['id']) ? processOwnerIdOrDomain($_GET['id']) : null;
 
 if (empty($feedId)) {
-    throw new Exception("Empty params", 400);
+    header('HTTP/1.1 400 Empty Params');
+    exit();
 }
 
 $stack = HandlerStack::create();
