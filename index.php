@@ -6,9 +6,39 @@ use Doctrine\Common\Cache\FilesystemCache;
 use FeedWriter\RSS2;
 use GuzzleHttp\Client;
 use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Psr7\Uri;
 use Kevinrob\GuzzleCache\CacheMiddleware;
+use Kevinrob\GuzzleCache\KeyValueHttpHeader;
 use Kevinrob\GuzzleCache\Storage\DoctrineCacheStorage;
 use Kevinrob\GuzzleCache\Strategy\GreedyCacheStrategy;
+use Psr\Http\Message\RequestInterface;
+
+class NoTokenCacheStrategy extends GreedyCacheStrategy {
+
+    protected function getCacheKey(RequestInterface $request, KeyValueHttpHeader $varyHeaders = null)
+    {
+        $uri = Uri::withoutQueryValue($request->getUri(), 'access_token');
+        if (null === $varyHeaders || $varyHeaders->isEmpty()) {
+            return hash(
+                'sha256',
+                'greedy'.$request->getMethod().$uri
+            );
+        }
+
+        $cacheHeaders = [];
+        foreach ($varyHeaders as $key => $value) {
+            if ($request->hasHeader($key)) {
+                $cacheHeaders[$key] = $request->getHeader($key);
+            }
+        }
+
+        return hash(
+            'sha256',
+            'greedy'.$request->getMethod().$uri.json_encode($cacheHeaders)
+        );
+    }
+
+}
 
 $dotenv = new Dotenv\Dotenv(__DIR__);
 $dotenv->load();
@@ -197,7 +227,7 @@ if (empty($feedId)) {
 $stack = HandlerStack::create();
 
 $stack->push(new CacheMiddleware(
-    new GreedyCacheStrategy(
+    new NoTokenCacheStrategy(
         new DoctrineCacheStorage(
             new FilesystemCache('cache/')
         ), 60 * 60 //Seconds
