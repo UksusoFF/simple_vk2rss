@@ -245,7 +245,7 @@ $client = new Client([
 $tokens = explode(',', getenv('VK_ACCESS_TOKEN'));
 
 $res = $client->get('https://api.vk.com/method/wall.get', [
-    'delay' => 10000,
+    'delay' => 1000,
     'query' => array_merge([
         'count' => 20,
         'extended' => 1,
