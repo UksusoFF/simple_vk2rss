@@ -225,14 +225,18 @@ if (empty($feedId)) {
 }
 
 $stack = HandlerStack::create();
-
-$stack->push(new CacheMiddleware(
-    new NoTokenCacheStrategy(
-        new DoctrineCacheStorage(
-            new FilesystemCache('cache/')
-        ), 60 * 60 //Seconds
-    )
-), 'cache');
+$lifetime = getenv('CACHE_LIFETIME');
+$stack->push(
+    new CacheMiddleware(
+        new NoTokenCacheStrategy(
+            new DoctrineCacheStorage(
+                new FilesystemCache('cache/')
+            ),
+            !empty($lifetime) ? $lifetime : (60 * 60 * 4) //Seconds
+        )
+    ),
+    'cache'
+);
 
 $client = new Client([
     'handler' => $stack,
@@ -241,12 +245,12 @@ $client = new Client([
 $tokens = explode(',', getenv('VK_ACCESS_TOKEN'));
 
 $res = $client->get('https://api.vk.com/method/wall.get', [
-    'delay' => 1000,
+    'delay' => 10000,
     'query' => array_merge([
         'count' => 20,
         'extended' => 1,
         'access_token' => $tokens[array_rand($tokens)],
-        'v' => '5.71',
+        'v' => '5.80',
     ], $feedId),
 ]);
 
