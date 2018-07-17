@@ -152,6 +152,11 @@ function getAuthorById($profiles, $id)
     ];
 }
 
+function getSrcFromPhoto($photo)
+{
+    return $photo->sizes[0]->url;
+}
+
 function getDescriptionFromPost($post)
 {
     $description = [];
@@ -167,7 +172,7 @@ function getDescriptionFromPost($post)
             switch ($attachment['type']) {
                 case 'photo':
                     $photo = $attachment[$attachment['type']];
-                    $src = $photo->sizes[0]->url;
+                    $src = getSrcFromPhoto($photo);
                     $description[] = "<a href=\"https://vk.com/photo{$photo->owner_id}_{$photo->id}\"><img src=\"{$src}\"></a>";
                     break;
                 case 'doc':
@@ -189,8 +194,9 @@ function getDescriptionFromPost($post)
                     break;
                 case 'album':
                     $album = $attachment[$attachment['type']];
+                    $src = getSrcFromPhoto($album->thumb);
                     $description[] = $album->title;
-                    $description[] = "<a href=\"https://vk.com/album{$album->owner_id}_{$album->id}\"><img src=\"{$album->thumb->photo_130}\"></a>";
+                    $description[] = "<a href=\"https://vk.com/album{$album->owner_id}_{$album->id}\"><img src=\"{$src}\"></a>";
                     break;
                 case 'market':
                     $market = $attachment[$attachment['type']];
