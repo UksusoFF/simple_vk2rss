@@ -167,7 +167,8 @@ function getDescriptionFromPost($post)
             switch ($attachment['type']) {
                 case 'photo':
                     $photo = $attachment[$attachment['type']];
-                    $description[] = "<a href=\"https://vk.com/photo{$photo->owner_id}_{$photo->id}\"><img src=\"{$photo->photo_130}\"></a>";
+                    $src = $photo->sizes[0]->url;
+                    $description[] = "<a href=\"https://vk.com/photo{$photo->owner_id}_{$photo->id}\"><img src=\"{$src}\"></a>";
                     break;
                 case 'doc':
                     $doc = $attachment[$attachment['type']];
