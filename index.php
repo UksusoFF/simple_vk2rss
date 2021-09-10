@@ -257,7 +257,7 @@ $res = $client->get('https://api.vk.com/method/wall.get', [
         'count' => 20,
         'extended' => 1,
         'access_token' => $tokens[array_rand($tokens)],
-        'v' => '5.80',
+        'v' => '5.131',
     ], $feedId),
 ]);
 
